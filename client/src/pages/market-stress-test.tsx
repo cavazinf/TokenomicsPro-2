@@ -41,7 +41,7 @@ export default function MarketStressTest() {
   const [currentDay, setCurrentDay] = useState(0);
   const [marketSentiment, setMarketSentiment] = useState(50); // 0-100 scale
   const [volatility, setVolatility] = useState(25); // 0-100 scale
-  const [crashan, setVolatility] = useState(25); // 0-100 scale
+  const [crashChance, setCrashChance] = useState(5); // 0-100 scale
   const [stressScenario, setStressScenario] = useState("market_crash");
   const [initialPrice, setInitialPrice] = useState(100);
   
@@ -50,8 +50,18 @@ export default function MarketStressTest() {
     { day: 0, price: 100, volume: 1000000, holders: 10000, market_cap: 100000000 }
   ]);
   
+  // Definindo o tipo para o evento
+  type MarketEvent = {
+    id: string;
+    name: string;
+    description: string;
+    impact: number;
+    duration: number;
+    probability: number;
+  };
+  
   // Evento atual
-  const [currentEvent, setCurrentEvent] = useState(null);
+  const [currentEvent, setCurrentEvent] = useState<MarketEvent | null>(null);
 
   // Cenários de estresse disponíveis
   const stressScenarios = [

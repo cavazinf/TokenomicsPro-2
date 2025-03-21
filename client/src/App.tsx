@@ -53,7 +53,7 @@ export default function App() {
           <Route path="/business-model" component={BusinessModel} />
           <Route path="/market-analysis" component={MarketAnalysis} />
           <Route path="/marketing-growth" component={MarketingGrowth} />
-          <Route path="/market-stress-test" component={NotFound} />
+          <Route path="/market-stress-test" component={MarketStressTest} />
           <Route path="/crypto-trading" component={CryptoTrading} />
           <Route path="/resources" component={NotFound} />
           <Route component={NotFound} />
