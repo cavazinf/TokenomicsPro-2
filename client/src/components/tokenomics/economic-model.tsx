@@ -145,32 +145,33 @@ export default function EconomicModel() {
           </div>
         </div>
 
-        <div className="h-64 rounded-lg bg-surface-light bg-opacity-50 border border-gray-700">
+        <div className="h-52 rounded-lg bg-surface-light bg-opacity-50 border border-gray-700">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={simulationData}
               margin={{
-                top: 10,
-                right: 30,
+                top: 5,
+                right: 20,
                 left: 0,
-                bottom: 10,
+                bottom: 5,
               }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-              <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#9ca3af" }} />
-              <YAxis tick={{ fontSize: 10, fill: "#9ca3af" }} />
+              <XAxis dataKey="month" tick={{ fontSize: 9, fill: "#9ca3af" }} />
+              <YAxis tick={{ fontSize: 9, fill: "#9ca3af" }} />
               <Tooltip 
                 contentStyle={{ backgroundColor: '#1f2937', borderColor: '#4b5563' }}
                 labelStyle={{ color: '#e5e7eb' }}
                 formatter={(value) => [`$${value}`, 'Price']}
               />
-              <Legend />
+              <Legend wrapperStyle={{ fontSize: '10px' }} />
               <Line
                 type="monotone"
                 dataKey="price"
                 stroke="#3b82f6"
-                activeDot={{ r: 8 }}
+                activeDot={{ r: 6 }}
                 name="Token Price"
+                strokeWidth={2}
               />
               <Line 
                 type="monotone" 
@@ -178,6 +179,7 @@ export default function EconomicModel() {
                 stroke="#10b981" 
                 strokeDasharray="5 5" 
                 name="Predicted Ceiling" 
+                strokeWidth={1.5}
               />
               <Line 
                 type="monotone" 
@@ -185,6 +187,7 @@ export default function EconomicModel() {
                 stroke="#f59e0b" 
                 strokeDasharray="5 5" 
                 name="Predicted Floor" 
+                strokeWidth={1.5}
               />
             </LineChart>
           </ResponsiveContainer>
