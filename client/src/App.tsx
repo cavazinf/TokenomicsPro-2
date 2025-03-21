@@ -17,6 +17,8 @@ import TokenDesigner from './pages/token-designer-page';
 import Econometrics from './pages/economic-models-page';
 import TokenizationModels from './pages/tokenization-models-page';
 import MarketAnalysis from './pages/market-analysis-page';
+import BusinessModel from './pages/business-model-page';
+import MarketingGrowth from './pages/marketing-growth-page';
 
 // Componentes
 import AppLayout from '@/components/layout/app-layout';
@@ -46,9 +48,9 @@ export default function App() {
           <Route path="/price-market-cap" component={PriceMarketCap} />
           <Route path="/econometrics" component={Econometrics} />
           <Route path="/tokenization-models" component={TokenizationModels} />
-          <Route path="/business-model" component={NotFound} />
+          <Route path="/business-model" component={BusinessModel} />
           <Route path="/market-analysis" component={MarketAnalysis} />
-          <Route path="/marketing-growth" component={NotFound} />
+          <Route path="/marketing-growth" component={MarketingGrowth} />
           <Route path="/market-stress-test" component={NotFound} />
           <Route path="/crypto-trading" component={NotFound} />
           <Route path="/resources" component={NotFound} />
