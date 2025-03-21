@@ -33,16 +33,16 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
 }) => {
   return (
     <Link href={href}>
-      <a
+      <div
         className={cn(
-          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:text-primary',
+          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:text-primary cursor-pointer',
           active ? 'bg-secondary text-primary' : 'text-muted-foreground'
         )}
         onClick={onClick}
       >
         {icon}
         <span>{children}</span>
-      </a>
+      </div>
     </Link>
   );
 };
@@ -78,6 +78,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       label: 'Token Distribution',
     },
     {
+      href: '/token-design',
+      icon: <Settings className="h-4 w-4" />,
+      label: 'Token Design',
+    },
+    {
       href: '/economic-simulation',
       icon: <BarChart3 className="h-4 w-4" />,
       label: 'Economic Simulation',
@@ -92,7 +97,41 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: <TrendingUp className="h-4 w-4" />,
       label: 'Price & Market Cap',
     },
-    // Outros itens do menu podem ser adicionados aqui
+    {
+      href: '/econometrics',
+      icon: <BarChart3 className="h-4 w-4" />,
+      label: 'Econometrics',
+    },
+    {
+      href: '/tokenization-models',
+      icon: <FileText className="h-4 w-4" />,
+      label: 'Tokenization Models',
+    },
+    {
+      href: '/business-model',
+      icon: <LayoutDashboard className="h-4 w-4" />,
+      label: 'Business Model',
+    },
+    {
+      href: '/market-analysis',
+      icon: <BarChart3 className="h-4 w-4" />,
+      label: 'Market Analysis',
+    },
+    {
+      href: '/marketing-growth',
+      icon: <TrendingUp className="h-4 w-4" />,
+      label: 'Marketing & Growth',
+    },
+    {
+      href: '/market-stress-test',
+      icon: <BarChart3 className="h-4 w-4" />,
+      label: 'Market Stress Test',
+    },
+    {
+      href: '/crypto-trading',
+      icon: <Coins className="h-4 w-4" />,
+      label: 'Crypto Trading',
+    },
   ];
 
   return (

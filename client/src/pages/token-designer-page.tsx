@@ -1,583 +1,561 @@
-import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/use-auth";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import React, { useState } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { InsertTokenModel, Project, TokenModel } from "@shared/schema";
-import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import Navbar from "@/components/navbar";
-import Sidebar from "@/components/sidebar";
-import { Coins, Save, FileText, HelpCircle } from "lucide-react";
-import { TokenPieChart, ChartData } from "@/components/ui/chart";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
+import { Slider } from "@/components/ui/slider";
+import { Check, HelpCircle } from "lucide-react";
 
-const tokenModelSchema = z.object({
-  name: z.string().min(3, { message: "Token name must be at least 3 characters" }),
-  projectId: z.number(),
-  tokenType: z.string(),
-  supplyModel: z.string(),
-  initialSupply: z.string().min(1, { message: "Initial supply is required" }),
-  tokenStandard: z.string(),
-  configuration: z.any().optional(),
-});
-
-type TokenModelFormValues = z.infer<typeof tokenModelSchema>;
-
-const TOKEN_TYPES = [
-  { value: "utility", label: "Utility Token", description: "Provides access to a product or service" },
-  { value: "governance", label: "Governance Token", description: "Gives voting power in a protocol" },
-  { value: "security", label: "Security Token", description: "Represents ownership in an asset" },
-  { value: "payment", label: "Payment Token", description: "Used for payments and transactions" },
-  { value: "nft", label: "NFT", description: "Non-fungible, unique digital assets" },
-];
-
-const SUPPLY_MODELS = [
-  { value: "fixed", label: "Fixed Supply", description: "Total supply is fixed forever" },
-  { value: "capped", label: "Capped Supply", description: "Supply can grow but has a maximum cap" },
-  { value: "inflationary", label: "Inflationary", description: "Supply increases over time with no cap" },
-  { value: "deflationary", label: "Deflationary", description: "Supply decreases over time through burning" },
-  { value: "rebase", label: "Rebase", description: "Supply adjusts automatically based on price" },
-];
-
-const TOKEN_STANDARDS = ["ERC-20", "ERC-721", "ERC-1155", "ERC-777", "BEP-20"];
-
-export default function TokenDesignerPage() {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState("design");
-  
-  // Distribution data for preview
-  const [distribution, setDistribution] = useState<ChartData[]>([
-    { name: "Team", value: 15, color: "#3b82f6" },
-    { name: "Investors", value: 25, color: "#ec4899" },
-    { name: "Community", value: 40, color: "#10b981" },
-    { name: "Reserves", value: 20, color: "#f59e0b" },
-  ]);
-  
-  const { data: projects, isLoading: loadingProjects } = useQuery<Project[]>({
-    queryKey: ["/api/projects"],
-    queryFn: getQueryFn({ on401: "throw" }),
-  });
-  
-  const form = useForm<TokenModelFormValues>({
-    resolver: zodResolver(tokenModelSchema),
-    defaultValues: {
-      name: "",
-      projectId: 0,
-      tokenType: "utility",
-      supplyModel: "fixed",
-      initialSupply: "100000000",
-      tokenStandard: "ERC-20",
-      configuration: {
-        distribution: {
-          team: 15,
-          investors: 25,
-          community: 40,
-          reserves: 20,
-        },
-      },
-    },
-  });
-  
-  const createTokenModelMutation = useMutation({
-    mutationFn: async (data: TokenModelFormValues) => {
-      const res = await apiRequest("POST", "/api/token-models", data);
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/token-models"] });
-      toast({
-        title: "Token Model Created",
-        description: "Your token model has been saved successfully",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Failed to create token model",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
+export default function TokenDesigner() {
+  const [activeTab, setActiveTab] = useState("basics");
+  const [formData, setFormData] = useState({
+    name: "",
+    symbol: "",
+    totalSupply: "100000000",
+    tokenType: "utility",
+    tokenStandard: "erc20",
+    initialPrice: "0.1",
+    description: "",
+    customFeatures: [] as string[],
+    supplyModel: "fixed",
+    inflationRate: 0,
+    maxSupply: "100000000",
+    utility: [] as string[],
+    governance: false,
+    transferRestrictions: false,
   });
 
-  const onSubmit = (data: TokenModelFormValues) => {
-    // Update distribution in the configuration
-    const updatedData = {
-      ...data,
-      configuration: {
-        ...data.configuration,
-        distribution: {
-          team: distribution.find(d => d.name === "Team")?.value || 15,
-          investors: distribution.find(d => d.name === "Investors")?.value || 25,
-          community: distribution.find(d => d.name === "Community")?.value || 40,
-          reserves: distribution.find(d => d.name === "Reserves")?.value || 20,
-        }
+  const handleInputChange = (field: string, value: string | number | boolean) => {
+    setFormData({
+      ...formData,
+      [field]: value,
+    });
+  };
+
+  const handleFeatureToggle = (feature: string) => {
+    setFormData((prev) => {
+      const features = [...prev.customFeatures];
+      if (features.includes(feature)) {
+        return {
+          ...prev,
+          customFeatures: features.filter(f => f !== feature),
+        };
+      } else {
+        return {
+          ...prev,
+          customFeatures: [...features, feature],
+        };
       }
-    };
-    createTokenModelMutation.mutate(updatedData);
+    });
   };
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
+  const handleUtilityToggle = (utility: string) => {
+    setFormData((prev) => {
+      const utilities = [...prev.utility];
+      if (utilities.includes(utility)) {
+        return {
+          ...prev,
+          utility: utilities.filter(u => u !== utility),
+        };
+      } else {
+        return {
+          ...prev,
+          utility: [...utilities, utility],
+        };
+      }
+    });
   };
+
+  const isFeatureSelected = (feature: string) => {
+    return formData.customFeatures.includes(feature);
+  };
+
+  const isUtilitySelected = (utility: string) => {
+    return formData.utility.includes(utility);
+  };
+
+  const tokenTypes = [
+    { value: "utility", label: "Utility Token" },
+    { value: "security", label: "Security Token" },
+    { value: "governance", label: "Governance Token" },
+    { value: "stablecoin", label: "Stablecoin" },
+    { value: "nft", label: "Non-Fungible Token (NFT)" },
+  ];
+
+  const tokenStandards = [
+    { value: "erc20", label: "ERC-20 (Ethereum)" },
+    { value: "bep20", label: "BEP-20 (Binance Smart Chain)" },
+    { value: "erc721", label: "ERC-721 (NFT)" },
+    { value: "erc1155", label: "ERC-1155 (Multi Token)" },
+    { value: "spl", label: "SPL (Solana)" },
+  ];
+
+  const supplyModels = [
+    { value: "fixed", label: "Fixed Supply" },
+    { value: "inflationary", label: "Inflationary" },
+    { value: "deflationary", label: "Deflationary" },
+    { value: "elastic", label: "Elastic Supply" },
+  ];
+
+  const customFeatures = [
+    { id: "staking", label: "Staking Mechanism" },
+    { id: "burn", label: "Token Burning" },
+    { id: "vesting", label: "Vesting Schedule" },
+    { id: "voting", label: "Governance Voting" },
+    { id: "fees", label: "Transaction Fees" },
+    { id: "rewards", label: "Rewards System" },
+  ];
+
+  const utilityOptions = [
+    { id: "access", label: "Access to Service/Platform" },
+    { id: "payment", label: "Payment Token" },
+    { id: "discounts", label: "Discounts and Benefits" },
+    { id: "staking_rewards", label: "Staking Rewards" },
+    { id: "nft_access", label: "NFT Access/Purchase" },
+  ];
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} toggle={toggleSidebar} />
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">Token Design</h1>
+      </div>
 
-      {/* Main Content */}
-      <div
-        className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${
-          sidebarOpen ? "md:ml-64" : ""
-        }`}
-      >
-        {/* Top Navigation */}
-        <Navbar toggleSidebar={toggleSidebar} />
-
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-background p-6">
-          <div className="mb-8">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
-              <div>
-                <h1 className="text-2xl font-bold">Token Designer</h1>
-                <p className="text-gray-400 mt-1">Design and configure your token model</p>
+      <Card>
+        <CardHeader>
+          <CardTitle>Token Designer</CardTitle>
+          <CardDescription>Design your token from scratch or use a template</CardDescription>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid grid-cols-4 w-full">
+              <TabsTrigger value="basics">Basic Details</TabsTrigger>
+              <TabsTrigger value="economics">Economics</TabsTrigger>
+              <TabsTrigger value="utility">Utility & Features</TabsTrigger>
+              <TabsTrigger value="review">Review & Export</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </CardHeader>
+        <CardContent>
+          <TabsContent value="basics" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="tokenName">Token Name</Label>
+                <Input 
+                  id="tokenName" 
+                  placeholder="e.g. My Token" 
+                  value={formData.name}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Full name of your token (e.g. "Ethereum")
+                </p>
               </div>
-
-              <Button className="mt-4 md:mt-0 bg-primary hover:bg-primary/90" onClick={form.handleSubmit(onSubmit)}>
-                <Save className="mr-2 h-4 w-4" />
-                Save Token Model
-              </Button>
+              <div className="space-y-2">
+                <Label htmlFor="tokenSymbol">Token Symbol</Label>
+                <Input 
+                  id="tokenSymbol" 
+                  placeholder="e.g. MTK" 
+                  maxLength={5}
+                  value={formData.symbol}
+                  onChange={(e) => handleInputChange("symbol", e.target.value)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Short symbol for your token (e.g. "ETH")
+                </p>
+              </div>
             </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="bg-surface border border-gray-700 p-1">
-                <TabsTrigger value="design" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-                  Design
-                </TabsTrigger>
-                <TabsTrigger value="distribution" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-                  Distribution
-                </TabsTrigger>
-                <TabsTrigger value="economics" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-                  Economics
-                </TabsTrigger>
-                <TabsTrigger value="preview" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-                  Preview
-                </TabsTrigger>
-              </TabsList>
+            <div className="space-y-2">
+              <Label htmlFor="tokenType">Token Type</Label>
+              <Select 
+                value={formData.tokenType}
+                onValueChange={(value) => handleInputChange("tokenType", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select token type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tokenTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                The primary classification of your token
+              </p>
+            </div>
 
-              <TabsContent value="design" className="space-y-6">
-                <Card className="bg-surface border-gray-700">
-                  <CardHeader>
-                    <CardTitle>Basic Token Information</CardTitle>
-                    <CardDescription>Configure the fundamental properties of your token</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Form {...form}>
-                      <form className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Token Name</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="Enter token name"
-                                    className="bg-background border-gray-700"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="projectId"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Project</FormLabel>
-                                <Select 
-                                  onValueChange={(value) => field.onChange(parseInt(value))}
-                                  value={field.value.toString()}
-                                  disabled={loadingProjects || !projects?.length}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger className="bg-background border-gray-700">
-                                      <SelectValue placeholder="Select project" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent className="bg-background border-gray-700">
-                                    {projects?.map((project) => (
-                                      <SelectItem key={project.id} value={project.id.toString()}>
-                                        {project.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormDescription>
-                                  {loadingProjects ? "Loading projects..." : !projects?.length ? "No projects available, please create a project first" : "Select the project this token belongs to"}
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <FormField
-                            control={form.control}
-                            name="tokenType"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Token Type</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger className="bg-background border-gray-700">
-                                      <SelectValue placeholder="Select token type" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent className="bg-background border-gray-700">
-                                    {TOKEN_TYPES.map((type) => (
-                                      <SelectItem key={type.value} value={type.value}>
-                                        {type.label} - <span className="text-xs text-gray-400">{type.description}</span>
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="supplyModel"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Supply Model</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger className="bg-background border-gray-700">
-                                      <SelectValue placeholder="Select supply model" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent className="bg-background border-gray-700">
-                                    {SUPPLY_MODELS.map((model) => (
-                                      <SelectItem key={model.value} value={model.value}>
-                                        {model.label} - <span className="text-xs text-gray-400">{model.description}</span>
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <FormField
-                            control={form.control}
-                            name="initialSupply"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Initial Supply</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="Enter initial supply"
-                                    className="bg-background border-gray-700"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormDescription>
-                                  Total number of tokens that will be created
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="tokenStandard"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Token Standard</FormLabel>
-                                <div className="flex flex-wrap gap-2">
-                                  {TOKEN_STANDARDS.map((standard) => (
-                                    <Button
-                                      key={standard}
-                                      type="button"
-                                      className={`${
-                                        field.value === standard
-                                          ? "bg-primary/20 border-primary/50 text-white"
-                                          : "bg-background border-gray-700 text-gray-300"
-                                      }`}
-                                      variant="outline"
-                                      onClick={() => field.onChange(standard)}
-                                    >
-                                      {standard}
-                                    </Button>
-                                  ))}
-                                </div>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </form>
-                    </Form>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+            <div className="space-y-2">
+              <Label htmlFor="tokenStandard">Token Standard</Label>
+              <Select 
+                value={formData.tokenStandard}
+                onValueChange={(value) => handleInputChange("tokenStandard", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select token standard" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tokenStandards.map((standard) => (
+                    <SelectItem key={standard.value} value={standard.value}>
+                      {standard.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                The technical standard your token will implement
+              </p>
+            </div>
 
-              <TabsContent value="distribution" className="space-y-6">
-                <Card className="bg-surface border-gray-700">
-                  <CardHeader>
-                    <CardTitle>Token Distribution</CardTitle>
-                    <CardDescription>Configure how tokens will be distributed</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h3 className="text-lg font-medium mb-4">Distribution Allocation</h3>
-                        {distribution.map((item, index) => (
-                          <div key={item.name} className="mb-4">
-                            <div className="flex justify-between items-center mb-2">
-                              <label className="text-sm font-medium">{item.name}</label>
-                              <div className="flex items-center">
-                                <Input
-                                  type="number"
-                                  value={item.value}
-                                  min="0"
-                                  max="100"
-                                  onChange={(e) => {
-                                    const newValue = parseInt(e.target.value) || 0;
-                                    const newDistribution = [...distribution];
-                                    newDistribution[index] = { ...item, value: newValue };
-                                    setDistribution(newDistribution);
-                                  }}
-                                  className="w-16 h-8 text-center p-1 bg-background border-gray-700 text-white"
-                                />
-                                <span className="ml-1 text-gray-400">%</span>
-                              </div>
-                            </div>
-                            <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                              <div
-                                className="h-full rounded-full"
-                                style={{ width: `${item.value}%`, backgroundColor: item.color }}
-                              ></div>
-                            </div>
-                          </div>
-                        ))}
-                        
-                        <div className="mt-6">
-                          <div className="flex justify-between items-center text-sm font-medium">
-                            <span>Total:</span>
-                            <span className={`${
-                              distribution.reduce((sum, item) => sum + item.value, 0) === 100
-                                ? "text-green-500"
-                                : "text-red-500"
-                            }`}>
-                              {distribution.reduce((sum, item) => sum + item.value, 0)}%
-                            </span>
-                          </div>
-                          {distribution.reduce((sum, item) => sum + item.value, 0) !== 100 && (
-                            <p className="text-red-500 text-xs mt-1">Total allocation must equal 100%</p>
-                          )}
-                        </div>
+            <div className="space-y-2">
+              <Label htmlFor="tokenDescription">Token Description</Label>
+              <Textarea 
+                id="tokenDescription" 
+                placeholder="Describe your token's purpose and value proposition..."
+                value={formData.description}
+                onChange={(e) => handleInputChange("description", e.target.value)}
+                rows={4}
+              />
+              <p className="text-sm text-muted-foreground">
+                A clear description of your token's purpose and utility
+              </p>
+            </div>
+
+            <div className="flex justify-end">
+              <Button onClick={() => setActiveTab("economics")}>
+                Next: Economics
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="economics" className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="supplyModel">Supply Model</Label>
+              <RadioGroup 
+                value={formData.supplyModel} 
+                onValueChange={(value) => handleInputChange("supplyModel", value)}
+                className="grid grid-cols-2 gap-4"
+              >
+                {supplyModels.map((model) => (
+                  <div key={model.value} className="flex items-center space-x-2 border rounded-lg p-4">
+                    <RadioGroupItem value={model.value} id={`supplyModel-${model.value}`} />
+                    <Label htmlFor={`supplyModel-${model.value}`} className="cursor-pointer font-medium">
+                      {model.label}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="totalSupply">
+                  {formData.supplyModel === "fixed" ? "Total Supply" : "Initial Supply"}
+                </Label>
+                <Input 
+                  id="totalSupply" 
+                  type="text"
+                  value={formData.totalSupply}
+                  onChange={(e) => handleInputChange("totalSupply", e.target.value)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  {formData.supplyModel === "fixed" 
+                    ? "The fixed total supply of tokens" 
+                    : "The initial amount of tokens at launch"}
+                </p>
+              </div>
+
+              {formData.supplyModel === "inflationary" && (
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <Label htmlFor="inflationRate">Inflation Rate (%/year)</Label>
+                    <span>{formData.inflationRate}%</span>
+                  </div>
+                  <Slider
+                    id="inflationRate"
+                    min={0}
+                    max={20}
+                    step={0.1}
+                    value={[formData.inflationRate as number]}
+                    onValueChange={(value) => handleInputChange("inflationRate", value[0])}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Annual rate at which new tokens are created
+                  </p>
+                </div>
+              )}
+
+              {formData.supplyModel !== "fixed" && (
+                <div className="space-y-2">
+                  <Label htmlFor="maxSupply">Maximum Supply (Optional)</Label>
+                  <Input 
+                    id="maxSupply" 
+                    type="text"
+                    value={formData.maxSupply}
+                    onChange={(e) => handleInputChange("maxSupply", e.target.value)}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Hard cap on the total tokens that can ever exist
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="initialPrice">Initial Token Price (USD)</Label>
+              <div className="flex items-center space-x-2">
+                <span>$</span>
+                <Input 
+                  id="initialPrice" 
+                  type="text"
+                  value={formData.initialPrice}
+                  onChange={(e) => handleInputChange("initialPrice", e.target.value)}
+                />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Estimated initial price in USD at token launch
+              </p>
+            </div>
+
+            <div className="space-y-2 pt-4">
+              <Label className="text-base font-medium">Custom Economic Features</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                {customFeatures.map((feature) => (
+                  <div 
+                    key={feature.id}
+                    className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
+                      isFeatureSelected(feature.id) ? 'bg-primary/10 border-primary' : ''
+                    }`}
+                    onClick={() => handleFeatureToggle(feature.id)}
+                  >
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center mr-2 ${
+                      isFeatureSelected(feature.id) ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                    }`}>
+                      {isFeatureSelected(feature.id) && <Check className="h-3 w-3" />}
+                    </div>
+                    <span>{feature.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={() => setActiveTab("basics")}>
+                Back
+              </Button>
+              <Button onClick={() => setActiveTab("utility")}>
+                Next: Utility & Features
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="utility" className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-base font-medium">Token Utility</Label>
+              <p className="text-sm text-muted-foreground">
+                Select all the utilities your token will provide:
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                {utilityOptions.map((utility) => (
+                  <div 
+                    key={utility.id}
+                    className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
+                      isUtilitySelected(utility.id) ? 'bg-primary/10 border-primary' : ''
+                    }`}
+                    onClick={() => handleUtilityToggle(utility.id)}
+                  >
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center mr-2 ${
+                      isUtilitySelected(utility.id) ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                    }`}>
+                      {isUtilitySelected(utility.id) && <Check className="h-3 w-3" />}
+                    </div>
+                    <span>{utility.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-medium">Governance Features</Label>
+                <div
+                  className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer ${
+                    formData.governance ? 'bg-primary justify-end' : 'bg-muted justify-start'
+                  }`}
+                  onClick={() => handleInputChange("governance", !formData.governance)}
+                >
+                  <div className="bg-white w-4 h-4 rounded-full shadow-md" />
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Enable governance features (voting, proposals, etc.)
+              </p>
+            </div>
+
+            <div className="space-y-2 pt-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-medium">Transfer Restrictions</Label>
+                <div
+                  className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer ${
+                    formData.transferRestrictions ? 'bg-primary justify-end' : 'bg-muted justify-start'
+                  }`}
+                  onClick={() => handleInputChange("transferRestrictions", !formData.transferRestrictions)}
+                >
+                  <div className="bg-white w-4 h-4 rounded-full shadow-md" />
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Implement transfer restrictions (for regulatory compliance)
+              </p>
+            </div>
+
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={() => setActiveTab("economics")}>
+                Back
+              </Button>
+              <Button onClick={() => setActiveTab("review")}>
+                Next: Review & Export
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="review" className="space-y-4">
+            <div className="border rounded-lg p-6 space-y-4">
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold">{formData.name || "My Token"}</h3>
+                <div className="flex items-center space-x-2">
+                  <span className="bg-primary/20 text-primary px-2 py-1 rounded-md font-medium">
+                    {formData.symbol || "TKN"}
+                  </span>
+                  <span className="bg-secondary/20 text-secondary px-2 py-1 rounded-md text-xs">
+                    {tokenTypes.find(t => t.value === formData.tokenType)?.label || "Utility Token"}
+                  </span>
+                  <span className="bg-muted px-2 py-1 rounded-md text-xs">
+                    {tokenStandards.find(s => s.value === formData.tokenStandard)?.label || "ERC-20"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-medium mb-2">Token Economics</h4>
+                  <div className="space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Supply Model:</span>
+                      <span>{supplyModels.find(m => m.value === formData.supplyModel)?.label}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Total Supply:</span>
+                      <span>{parseInt(formData.totalSupply).toLocaleString()} tokens</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Initial Price:</span>
+                      <span>${formData.initialPrice} USD</span>
+                    </div>
+                    {formData.supplyModel === "inflationary" && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Inflation Rate:</span>
+                        <span>{formData.inflationRate}% per year</span>
                       </div>
-                      
-                      <div className="flex flex-col items-center justify-center">
-                        <div className="h-64 w-64">
-                          <TokenPieChart 
-                            data={distribution} 
-                            innerRadius={60}
-                            outerRadius={80}
-                            total={form.getValues("initialSupply")}
-                            totalLabel="Total Supply"
-                          />
+                    )}
+                    {formData.supplyModel !== "fixed" && parseInt(formData.maxSupply) > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Maximum Supply:</span>
+                        <span>{parseInt(formData.maxSupply).toLocaleString()} tokens</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium mb-2">Token Features</h4>
+                  <div className="space-y-1">
+                    {formData.customFeatures.length > 0 ? (
+                      formData.customFeatures.map((feature: string) => (
+                        <div key={feature} className="flex items-center">
+                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                          <span>
+                            {customFeatures.find(f => f.id === feature)?.label}
+                          </span>
                         </div>
+                      ))
+                    ) : (
+                      <div className="text-muted-foreground">No special features selected</div>
+                    )}
+                  </div>
+
+                  <h4 className="font-medium mb-2 mt-4">Token Utility</h4>
+                  <div className="space-y-1">
+                    {formData.utility.length > 0 ? (
+                      formData.utility.map((utility: string) => (
+                        <div key={utility} className="flex items-center">
+                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                          <span>
+                            {utilityOptions.find(u => u.id === utility)?.label}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-muted-foreground">No utilities selected</div>
+                    )}
+                  </div>
+
+                  {formData.governance && (
+                    <div className="mt-2">
+                      <div className="flex items-center">
+                        <Check className="h-4 w-4 mr-2 text-green-500" />
+                        <span>Governance Features Enabled</span>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                  )}
 
-              <TabsContent value="economics" className="space-y-6">
-                <Card className="bg-surface border-gray-700">
-                  <CardHeader>
-                    <CardTitle>Token Economics</CardTitle>
-                    <CardDescription>Configure economic parameters for your token</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h3 className="text-lg font-medium mb-4">Monetary Policy</h3>
-                        <div className="space-y-4">
-                          <div>
-                            <label className="text-sm font-medium block mb-2">Inflation Rate</label>
-                            <div className="flex items-center">
-                              <Input
-                                type="number"
-                                value="5"
-                                className="bg-background border-gray-700 text-white"
-                              />
-                              <span className="ml-2 text-gray-400">% per year</span>
-                            </div>
-                            <p className="text-xs text-gray-400 mt-1">Annual rate at which new tokens are created</p>
-                          </div>
-                          
-                          <div>
-                            <label className="text-sm font-medium block mb-2">Transaction Fee</label>
-                            <div className="flex items-center">
-                              <Input
-                                type="number"
-                                value="0.5"
-                                step="0.1"
-                                className="bg-background border-gray-700 text-white"
-                              />
-                              <span className="ml-2 text-gray-400">%</span>
-                            </div>
-                            <p className="text-xs text-gray-400 mt-1">Fee charged on each transaction</p>
-                          </div>
-                          
-                          <div>
-                            <label className="text-sm font-medium block mb-2">Burn Rate</label>
-                            <div className="flex items-center">
-                              <Input
-                                type="number"
-                                value="1"
-                                step="0.1"
-                                className="bg-background border-gray-700 text-white"
-                              />
-                              <span className="ml-2 text-gray-400">%</span>
-                            </div>
-                            <p className="text-xs text-gray-400 mt-1">Percentage of fees that are burned</p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h3 className="text-lg font-medium mb-4">Utility Mechanisms</h3>
-                        <div className="space-y-4">
-                          <div>
-                            <label className="text-sm font-medium block mb-2">Staking APY</label>
-                            <div className="flex items-center">
-                              <Input
-                                type="number"
-                                value="12"
-                                className="bg-background border-gray-700 text-white"
-                              />
-                              <span className="ml-2 text-gray-400">% per year</span>
-                            </div>
-                            <p className="text-xs text-gray-400 mt-1">Annual yield for staking tokens</p>
-                          </div>
-                          
-                          <div>
-                            <label className="text-sm font-medium block mb-2">Governance Power</label>
-                            <Select defaultValue="linear">
-                              <SelectTrigger className="bg-background border-gray-700">
-                                <SelectValue placeholder="Select governance model" />
-                              </SelectTrigger>
-                              <SelectContent className="bg-background border-gray-700">
-                                <SelectItem value="linear">Linear (1 token = 1 vote)</SelectItem>
-                                <SelectItem value="quadratic">Quadratic (vote power = √tokens)</SelectItem>
-                                <SelectItem value="time-weighted">Time-Weighted (based on holding period)</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <p className="text-xs text-gray-400 mt-1">How voting power is calculated</p>
-                          </div>
-                        </div>
+                  {formData.transferRestrictions && (
+                    <div className="mt-2">
+                      <div className="flex items-center">
+                        <Check className="h-4 w-4 mr-2 text-green-500" />
+                        <span>Transfer Restrictions Enabled</span>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                  )}
+                </div>
+              </div>
 
-              <TabsContent value="preview" className="space-y-6">
-                <Card className="bg-surface border-gray-700">
-                  <CardHeader>
-                    <CardTitle>Token Model Preview</CardTitle>
-                    <CardDescription>Review your token design before finalizing</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h3 className="text-lg font-medium mb-4">Token Summary</h3>
-                        <dl className="space-y-4">
-                          <div>
-                            <dt className="text-sm font-medium text-gray-400">Token Name</dt>
-                            <dd className="text-white">{form.getValues("name") || "My Token"}</dd>
-                          </div>
-                          <div>
-                            <dt className="text-sm font-medium text-gray-400">Token Type</dt>
-                            <dd className="text-white capitalize">
-                              {TOKEN_TYPES.find(t => t.value === form.getValues("tokenType"))?.label || "Utility Token"}
-                            </dd>
-                          </div>
-                          <div>
-                            <dt className="text-sm font-medium text-gray-400">Supply Model</dt>
-                            <dd className="text-white capitalize">
-                              {SUPPLY_MODELS.find(m => m.value === form.getValues("supplyModel"))?.label || "Fixed Supply"}
-                            </dd>
-                          </div>
-                          <div>
-                            <dt className="text-sm font-medium text-gray-400">Initial Supply</dt>
-                            <dd className="text-white">
-                              {parseFloat(form.getValues("initialSupply")).toLocaleString()} tokens
-                            </dd>
-                          </div>
-                          <div>
-                            <dt className="text-sm font-medium text-gray-400">Token Standard</dt>
-                            <dd className="text-white">{form.getValues("tokenStandard")}</dd>
-                          </div>
-                        </dl>
-                      </div>
-                      
-                      <div>
-                        <h3 className="text-lg font-medium mb-4">Distribution Summary</h3>
-                        <div className="h-64 w-full flex items-center justify-center">
-                          <TokenPieChart 
-                            data={distribution} 
-                            innerRadius={60}
-                            outerRadius={80}
-                            showLegend={true}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-8 flex justify-end space-x-4">
-                      <Button variant="outline" className="border-gray-700 text-white">
-                        <FileText className="mr-2 h-4 w-4" />
-                        Export as PDF
-                      </Button>
-                      <Button className="bg-primary hover:bg-primary/90" onClick={form.handleSubmit(onSubmit)} disabled={createTokenModelMutation.isPending}>
-                        <Save className="mr-2 h-4 w-4" />
-                        {createTokenModelMutation.isPending ? "Saving..." : "Save Token Model"}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </main>
-      </div>
+              {formData.description && (
+                <div>
+                  <h4 className="font-medium mb-2">Token Description</h4>
+                  <p className="text-muted-foreground">{formData.description}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={() => setActiveTab("utility")}>
+                Back
+              </Button>
+              <div className="space-x-2">
+                <Button variant="outline">Download JSON</Button>
+                <Button>Save Token Model</Button>
+              </div>
+            </div>
+          </TabsContent>
+        </CardContent>
+      </Card>
     </div>
   );
 }
