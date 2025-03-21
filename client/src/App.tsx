@@ -7,17 +7,21 @@ import { ProtectedRoute } from "./lib/protected-route";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
+import ProjectsPage from "@/pages/projects-page";
+import TokenDesignerPage from "@/pages/token-designer-page";
+import EconomicModelsPage from "@/pages/economic-models-page";
+import DistributionPlansPage from "@/pages/distribution-plans-page";
 
 function Router() {
   return (
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
-      <ProtectedRoute path="/projects" component={HomePage} />
+      <ProtectedRoute path="/projects" component={ProjectsPage} />
       <ProtectedRoute path="/profile" component={HomePage} />
-      <ProtectedRoute path="/token-designer" component={HomePage} />
-      <ProtectedRoute path="/economic-models" component={HomePage} />
-      <ProtectedRoute path="/distribution-plans" component={HomePage} />
-      <ProtectedRoute path="/vesting-schedules" component={HomePage} />
+      <ProtectedRoute path="/token-designer" component={TokenDesignerPage} />
+      <ProtectedRoute path="/economic-models" component={EconomicModelsPage} />
+      <ProtectedRoute path="/distribution-plans" component={DistributionPlansPage} />
+      <ProtectedRoute path="/vesting-schedules" component={DistributionPlansPage} />
       <ProtectedRoute path="/startup-planner" component={HomePage} />
       <ProtectedRoute path="/business-models" component={HomePage} />
       <ProtectedRoute path="/project-roadmap" component={HomePage} />
