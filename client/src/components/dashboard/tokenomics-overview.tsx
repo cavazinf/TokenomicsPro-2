@@ -1,13 +1,25 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart2, PieChart, RefreshCw, MoreHorizontal } from "lucide-react";
+import { RefreshCw, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PieChart, Pie, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ResponsiveContainer, Legend } from "recharts";
 
 export default function TokenomicsOverview() {
+  const COLORS = ['#3b82f6', '#ec4899', '#10b981', '#f59e0b'];
+
   const distributionData = [
-    { category: "Team", percentage: 15, color: "bg-primary" },
-    { category: "Investors", percentage: 25, color: "bg-secondary" },
-    { category: "Community", percentage: 40, color: "bg-accent" },
-    { category: "Reserves", percentage: 20, color: "bg-warning" },
+    { name: "Team", value: 15, color: COLORS[0] },
+    { name: "Investors", value: 25, color: COLORS[1] },
+    { name: "Community", value: 40, color: COLORS[2] },
+    { name: "Reserves", value: 20, color: COLORS[3] },
+  ];
+
+  const vestingData = [
+    { month: 'M1', Team: 0, Investors: 0, Community: 5, Reserves: 0 },
+    { month: 'M3', Team: 0, Investors: 5, Community: 5, Reserves: 0 },
+    { month: 'M6', Team: 5, Investors: 5, Community: 10, Reserves: 5 },
+    { month: 'M9', Team: 0, Investors: 5, Community: 5, Reserves: 5 },
+    { month: 'M12', Team: 5, Investors: 5, Community: 10, Reserves: 5 },
+    { month: 'M18', Team: 5, Investors: 5, Community: 5, Reserves: 5 },
   ];
 
   return (
@@ -31,20 +43,32 @@ export default function TokenomicsOverview() {
         <div className="flex flex-col lg:flex-row">
           <div className="w-full lg:w-1/2 mb-4 lg:mb-0">
             <h3 className="text-sm font-medium mb-3">Token Distribution</h3>
-            <div className="h-48 rounded-lg overflow-hidden flex items-center justify-center bg-surface-light bg-opacity-50 border border-gray-700">
-              <div className="text-center">
-                <div className="p-2 rounded-full bg-background/40 inline-block mb-2">
-                  <PieChart className="h-6 w-6 text-gray-300" />
-                </div>
-                <p className="text-sm text-gray-400">Interactive pie chart showing token distribution</p>
-              </div>
+            <div className="h-48 rounded-lg overflow-hidden bg-surface-light bg-opacity-50 border border-gray-700">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={distributionData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={60}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {distributionData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => `${value}%`} />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2">
               {distributionData.map((item) => (
-                <div key={item.category} className="flex items-center">
-                  <div className={`h-3 w-3 rounded-full ${item.color} mr-2`}></div>
+                <div key={item.name} className="flex items-center">
+                  <div style={{ backgroundColor: item.color }} className="h-3 w-3 rounded-full mr-2"></div>
                   <span className="text-xs">
-                    {item.category} ({item.percentage}%)
+                    {item.name} ({item.value}%)
                   </span>
                 </div>
               ))}
@@ -53,13 +77,19 @@ export default function TokenomicsOverview() {
 
           <div className="w-full lg:w-1/2 lg:pl-4">
             <h3 className="text-sm font-medium mb-3">Vesting Schedule</h3>
-            <div className="h-48 rounded-lg overflow-hidden flex items-center justify-center bg-surface-light bg-opacity-50 border border-gray-700">
-              <div className="text-center">
-                <div className="p-2 rounded-full bg-background/40 inline-block mb-2">
-                  <BarChart2 className="h-6 w-6 text-gray-300" />
-                </div>
-                <p className="text-sm text-gray-400">Interactive bar chart showing vesting timeline</p>
-              </div>
+            <div className="h-48 rounded-lg overflow-hidden bg-surface-light bg-opacity-50 border border-gray-700">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={vestingData}>
+                  <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 10 }} />
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: '9px' }} />
+                  <Bar dataKey="Team" stackId="a" fill={COLORS[0]} />
+                  <Bar dataKey="Investors" stackId="a" fill={COLORS[1]} />
+                  <Bar dataKey="Community" stackId="a" fill={COLORS[2]} />
+                  <Bar dataKey="Reserves" stackId="a" fill={COLORS[3]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
             <div className="mt-4">
               <div className="flex items-center justify-between mb-2">

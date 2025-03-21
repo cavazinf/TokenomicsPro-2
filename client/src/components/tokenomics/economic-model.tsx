@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { BarChart3 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 export default function EconomicModel() {
   const { toast } = useToast();
@@ -14,8 +14,55 @@ export default function EconomicModel() {
   const [liquidityIncentives, setLiquidityIncentives] = useState(25);
   const [initialPrice, setInitialPrice] = useState("$0.10");
   const [supplyGrowth, setSupplyGrowth] = useState("5% yearly");
+  const [simulationData, setSimulationData] = useState<any[]>([]);
+
+  // Generate simulation data when parameters change
+  useEffect(() => {
+    generateSimulationData();
+  }, [stakingYield, transactionFee, liquidityIncentives]);
+
+  const generateSimulationData = () => {
+    // Parse initial price to get a starting value
+    const startPrice = parseFloat(initialPrice.replace('$', '')) || 0.1;
+    
+    // Generate simulation data based on parameters
+    const data = [];
+    let price = startPrice;
+    
+    for (let month = 1; month <= 24; month++) {
+      // Simple simulation algorithm:
+      // - Higher staking yield increases price over time
+      // - Transaction fees slightly decrease growth
+      // - Liquidity incentives help stabilize volatility
+      const stakingEffect = (stakingYield / 100) * 0.01 * month;
+      const feeEffect = (transactionFee / 100) * 0.005 * month;
+      const liquidityEffect = (liquidityIncentives / 200) * (Math.random() > 0.5 ? 1 : -0.5);
+      
+      // Add some randomness for realistic simulation
+      const randomFactor = Math.random() * 0.05 - 0.025;
+      
+      // Calculate new price with effects
+      price = price * (1 + stakingEffect - feeEffect + liquidityEffect + randomFactor);
+      
+      // Add some volatility but keep the trend
+      const volatility = Math.random() * 0.1 - 0.05;
+      const marketPrice = price * (1 + volatility);
+      
+      data.push({
+        month: `M${month}`,
+        price: parseFloat(marketPrice.toFixed(4)),
+        // Add predictive high/low bounds
+        predicted: parseFloat((marketPrice * (1 + 0.1)).toFixed(4)),
+        lower: parseFloat((marketPrice * (1 - 0.1)).toFixed(4))
+      });
+    }
+    
+    setSimulationData(data);
+  };
 
   const handleRunSimulation = () => {
+    generateSimulationData();
+    
     toast({
       title: "Simulation Running",
       description: "Your economic model simulation is being processed.",
@@ -98,11 +145,49 @@ export default function EconomicModel() {
           </div>
         </div>
 
-        <div className="h-32 rounded-lg flex items-center justify-center bg-surface-light bg-opacity-50 border border-gray-700">
-          <div className="text-center">
-            <BarChart3 className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-            <p className="text-sm text-gray-400">Token price simulation graph</p>
-          </div>
+        <div className="h-64 rounded-lg bg-surface-light bg-opacity-50 border border-gray-700">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={simulationData}
+              margin={{
+                top: 10,
+                right: 30,
+                left: 0,
+                bottom: 10,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#9ca3af" }} />
+              <YAxis tick={{ fontSize: 10, fill: "#9ca3af" }} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#1f2937', borderColor: '#4b5563' }}
+                labelStyle={{ color: '#e5e7eb' }}
+                formatter={(value) => [`$${value}`, 'Price']}
+              />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="price"
+                stroke="#3b82f6"
+                activeDot={{ r: 8 }}
+                name="Token Price"
+              />
+              <Line 
+                type="monotone" 
+                dataKey="predicted" 
+                stroke="#10b981" 
+                strokeDasharray="5 5" 
+                name="Predicted Ceiling" 
+              />
+              <Line 
+                type="monotone" 
+                dataKey="lower" 
+                stroke="#f59e0b" 
+                strokeDasharray="5 5" 
+                name="Predicted Floor" 
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
 
         <Button onClick={handleRunSimulation} className="w-full bg-secondary hover:bg-secondary/90">
