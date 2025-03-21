@@ -20,6 +20,7 @@ import MarketAnalysis from './pages/market-analysis-page';
 import BusinessModel from './pages/business-model-page';
 import MarketingGrowth from './pages/marketing-growth-page';
 import CryptoTrading from './pages/crypto-trading-page';
+import MarketStressTest from './pages/market-stress-test';
 
 // Componentes
 import AppLayout from '@/components/layout/app-layout';
