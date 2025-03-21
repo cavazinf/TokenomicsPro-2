@@ -19,6 +19,7 @@ import TokenizationModels from './pages/tokenization-models-page';
 import MarketAnalysis from './pages/market-analysis-page';
 import BusinessModel from './pages/business-model-page';
 import MarketingGrowth from './pages/marketing-growth-page';
+import CryptoTrading from './pages/crypto-trading-page';
 
 // Componentes
 import AppLayout from '@/components/layout/app-layout';
@@ -52,7 +53,7 @@ export default function App() {
           <Route path="/market-analysis" component={MarketAnalysis} />
           <Route path="/marketing-growth" component={MarketingGrowth} />
           <Route path="/market-stress-test" component={NotFound} />
-          <Route path="/crypto-trading" component={NotFound} />
+          <Route path="/crypto-trading" component={CryptoTrading} />
           <Route path="/resources" component={NotFound} />
           <Route component={NotFound} />
         </Switch>

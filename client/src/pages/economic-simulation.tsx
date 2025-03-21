@@ -277,6 +277,8 @@ export default function EconomicSimulation() {
             <CardDescription>
               Projected token metrics over {simulationParams.simulationMonths} months
             </CardDescription>
+          </CardHeader>
+          <CardContent>
             <Tabs defaultValue="price" onValueChange={setActiveMetric} value={activeMetric}>
               <TabsList className="grid grid-cols-5 w-full">
                 <TabsTrigger value="price">Price</TabsTrigger>
@@ -285,11 +287,8 @@ export default function EconomicSimulation() {
                 <TabsTrigger value="users">Users</TabsTrigger>
                 <TabsTrigger value="staking">Staking</TabsTrigger>
               </TabsList>
-            </Tabs>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[400px] mt-4">
-              <TabsContent value="price" className="h-full">
+                
+              <TabsContent value="price" className="h-[400px] mt-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={data}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -454,36 +453,36 @@ export default function EconomicSimulation() {
                   </LineChart>
                 </ResponsiveContainer>
               </TabsContent>
-            </div>
-
-            {data.length > 0 && (
-              <div className="mt-4 grid grid-cols-3 gap-4">
-                <div className="border rounded-lg p-3 text-center">
-                  <div className="text-sm text-gray-400">Final Price</div>
-                  <div className="text-lg font-semibold">${data[data.length - 1].price.toFixed(4)}</div>
-                  <div className="text-xs text-gray-400">
-                    {(data[data.length - 1].price / data[0].price > 1 ? '+' : '')}
-                    {((data[data.length - 1].price / data[0].price - 1) * 100).toFixed(1)}%
+              
+              {data.length > 0 && (
+                <div className="mt-4 grid grid-cols-3 gap-4">
+                  <div className="border rounded-lg p-3 text-center">
+                    <div className="text-sm text-gray-400">Final Price</div>
+                    <div className="text-lg font-semibold">${data[data.length - 1].price.toFixed(4)}</div>
+                    <div className="text-xs text-gray-400">
+                      {(data[data.length - 1].price / data[0].price > 1 ? '+' : '')}
+                      {((data[data.length - 1].price / data[0].price - 1) * 100).toFixed(1)}%
+                    </div>
+                  </div>
+                  <div className="border rounded-lg p-3 text-center">
+                    <div className="text-sm text-gray-400">Final Market Cap</div>
+                    <div className="text-lg font-semibold">{formatDollar(data[data.length - 1].marketCap)}</div>
+                    <div className="text-xs text-gray-400">
+                      {(data[data.length - 1].marketCap / data[0].marketCap > 1 ? '+' : '')}
+                      {((data[data.length - 1].marketCap / data[0].marketCap - 1) * 100).toFixed(1)}%
+                    </div>
+                  </div>
+                  <div className="border rounded-lg p-3 text-center">
+                    <div className="text-sm text-gray-400">Final Users</div>
+                    <div className="text-lg font-semibold">{formatNumber(data[data.length - 1].users)}</div>
+                    <div className="text-xs text-gray-400">
+                      {(data[data.length - 1].users / data[0].users > 1 ? '+' : '')}
+                      {((data[data.length - 1].users / data[0].users - 1) * 100).toFixed(1)}%
+                    </div>
                   </div>
                 </div>
-                <div className="border rounded-lg p-3 text-center">
-                  <div className="text-sm text-gray-400">Final Market Cap</div>
-                  <div className="text-lg font-semibold">{formatDollar(data[data.length - 1].marketCap)}</div>
-                  <div className="text-xs text-gray-400">
-                    {(data[data.length - 1].marketCap / data[0].marketCap > 1 ? '+' : '')}
-                    {((data[data.length - 1].marketCap / data[0].marketCap - 1) * 100).toFixed(1)}%
-                  </div>
-                </div>
-                <div className="border rounded-lg p-3 text-center">
-                  <div className="text-sm text-gray-400">Final Users</div>
-                  <div className="text-lg font-semibold">{formatNumber(data[data.length - 1].users)}</div>
-                  <div className="text-xs text-gray-400">
-                    {(data[data.length - 1].users / data[0].users > 1 ? '+' : '')}
-                    {((data[data.length - 1].users / data[0].users - 1) * 100).toFixed(1)}%
-                  </div>
-                </div>
-              </div>
-            )}
+              )}
+            </Tabs>
           </CardContent>
         </Card>
       </div>
