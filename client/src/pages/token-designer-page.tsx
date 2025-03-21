@@ -65,7 +65,7 @@ export default function TokenDesignerPage() {
   
   const { data: projects, isLoading: loadingProjects } = useQuery<Project[]>({
     queryKey: ["/api/projects"],
-    queryFn: getQueryFn(),
+    queryFn: getQueryFn({ on401: "throw" }),
   });
   
   const form = useForm<TokenModelFormValues>({

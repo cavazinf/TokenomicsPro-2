@@ -47,7 +47,7 @@ export default function ProjectsPage() {
 
   const { data: projects, isLoading } = useQuery<Project[]>({
     queryKey: ["/api/projects"],
-    queryFn: getQueryFn(),
+    queryFn: getQueryFn({ on401: "throw" }),
   });
 
   const createProjectMutation = useMutation({

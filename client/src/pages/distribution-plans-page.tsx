@@ -106,17 +106,6 @@ export default function DistributionPlansPage() {
     return { monthlyData: data, cumulativeData };
   };
   
-  const { data: projects, isLoading: loadingProjects } = useQuery<Project[]>({
-    queryKey: ["/api/projects"],
-    queryFn: getQueryFn(),
-  });
-  
-  const { data: tokenModels, isLoading: loadingTokenModels } = useQuery<TokenModel[]>({
-    queryKey: ["/api/token-models"],
-    queryFn: getQueryFn(),
-    enabled: !!form.getValues("projectId"),
-  });
-  
   const form = useForm<DistributionPlanFormValues>({
     resolver: zodResolver(distributionPlanSchema),
     defaultValues: {
@@ -126,6 +115,17 @@ export default function DistributionPlansPage() {
       distribution: {},
       vestingSchedules: {},
     },
+  });
+
+  const { data: projects, isLoading: loadingProjects } = useQuery<Project[]>({
+    queryKey: ["/api/projects"],
+    queryFn: getQueryFn({ on401: "throw" }),
+  });
+  
+  const { data: tokenModels, isLoading: loadingTokenModels } = useQuery<TokenModel[]>({
+    queryKey: ["/api/token-models"],
+    queryFn: getQueryFn({ on401: "throw" }),
+    enabled: !!form.getValues("projectId"),
   });
   
   const createDistributionPlanMutation = useMutation({
