@@ -68,7 +68,7 @@ export default function DistributionVesting() {
       <CardContent className="p-5 space-y-6">
         <div>
           <Label className="text-sm font-medium mb-3 block">Token Distribution</Label>
-          <div className="h-64 rounded-lg overflow-hidden bg-surface-light bg-opacity-50 border border-gray-700 mb-4">
+          <div className="h-52 rounded-lg overflow-hidden bg-surface-light bg-opacity-50 border border-gray-700 mb-4">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -76,16 +76,16 @@ export default function DistributionVesting() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  outerRadius={80}
+                  outerRadius={50}
                   dataKey="percentage"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
                 >
                   {distribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
                 <Tooltip formatter={(value) => `${value}%`} />
-                <Legend />
+                <Legend wrapperStyle={{ fontSize: '10px' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -112,11 +112,11 @@ export default function DistributionVesting() {
 
         <div>
           <Label className="text-sm font-medium mb-3 block">Vesting Schedule</Label>
-          <div className="h-64 rounded-lg overflow-hidden bg-surface-light bg-opacity-50 border border-gray-700 mb-4">
+          <div className="h-52 rounded-lg overflow-hidden bg-surface-light bg-opacity-50 border border-gray-700 mb-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={vestingData}>
-                <XAxis dataKey="month" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} />
+                <XAxis dataKey="month" tick={{ fontSize: 9 }} />
+                <YAxis tick={{ fontSize: 9 }} />
                 <Tooltip />
                 <Legend wrapperStyle={{ fontSize: '9px' }} />
                 <Bar dataKey="Team" stackId="a" fill={COLORS[0]} />
