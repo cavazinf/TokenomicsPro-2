@@ -12,6 +12,19 @@ function Router() {
   return (
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
+      <ProtectedRoute path="/projects" component={HomePage} />
+      <ProtectedRoute path="/profile" component={HomePage} />
+      <ProtectedRoute path="/token-designer" component={HomePage} />
+      <ProtectedRoute path="/economic-models" component={HomePage} />
+      <ProtectedRoute path="/distribution-plans" component={HomePage} />
+      <ProtectedRoute path="/vesting-schedules" component={HomePage} />
+      <ProtectedRoute path="/startup-planner" component={HomePage} />
+      <ProtectedRoute path="/business-models" component={HomePage} />
+      <ProtectedRoute path="/project-roadmap" component={HomePage} />
+      <ProtectedRoute path="/team-builder" component={HomePage} />
+      <ProtectedRoute path="/learning-center" component={HomePage} />
+      <ProtectedRoute path="/help" component={HomePage} />
+      <ProtectedRoute path="/settings" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
